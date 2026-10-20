@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this code or its results, please cite it as below, together with the UPENN-GBM and AIMI data papers listed in README.md."
+title: "Patients, not slices: leakage-aware, closed-form and conformally calibrated brain tumor detection on MRI"
+authors:
+  - family-names: Keivanimehr
+    given-names: Mehran
+version: 0.1.0
+date-released: 2026-10-20
+license: MIT
+repository-code: "https://github.com/MehranKeivanimehr/Brain-Tumor-Detection"
+keywords:
+  - brain tumor
+  - MRI
+  - data leakage
+  - conformal prediction
+  - extreme learning machine
+  - jackknife+
+  - glioblastoma
