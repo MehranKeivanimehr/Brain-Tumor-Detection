@@ -1,0 +1,58 @@
+{
+ "features": "resnet50",
+ "width": 2048,
+ "lam": 100.0,
+ "runs": [
+  {
+   "patients": 25,
+   "slices": 843,
+   "closed_form_s": 1.2897629737854004,
+   "refit_s": 11.944230556488037,
+   "speedup": 9.260795044714472,
+   "max_abs_diff": 2.957634137601417e-13,
+   "max_abs_decision": 2.2355573384053,
+   "refit_standardizer_corr": 0.9994549071772276,
+   "refit_standardizer_sign_agreement": 0.9905100830367735
+  },
+  {
+   "patients": 50,
+   "slices": 1632,
+   "closed_form_s": 1.152888536453247,
+   "refit_s": 25.096307039260864,
+   "speedup": 21.76819895917023,
+   "max_abs_diff": 1.0447198661722723e-13,
+   "max_abs_decision": 2.1715723872752783,
+   "refit_standardizer_corr": 0.9998002876104052,
+   "refit_standardizer_sign_agreement": 0.9963235294117647
+  },
+  {
+   "patients": 100,
+   "slices": 3317,
+   "closed_form_s": 1.7468647956848145,
+   "refit_s": 77.18141078948975,
+   "speedup": 44.18281883071135,
+   "max_abs_diff": 2.3359092438113294e-13,
+   "max_abs_decision": 2.72376323902612,
+   "refit_standardizer_corr": 0.9999526716890571,
+   "refit_standardizer_sign_agreement": 0.998191136569189
+  },
+  {
+   "patients": 200,
+   "slices": 6667,
+   "closed_form_s": 4.0753114223480225,
+   "refit_s": 296.79715490341187,
+   "speedup": 72.82809192834884,
+   "max_abs_diff": 2.8399504969911504e-13,
+   "max_abs_decision": 2.3956606384830375
+  },
+  {
+   "patients": 400,
+   "slices": 13200,
+   "closed_form_s": 5.9946770668029785,
+   "refit_s": 1017.0413503646851,
+   "speedup": 169.65740423229894,
+   "max_abs_diff": 3.4994229736184934e-13,
+   "max_abs_decision": 2.509250056289962
+  }
+ ]
+}

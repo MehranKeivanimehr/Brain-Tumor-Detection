@@ -1,0 +1,26 @@
+{
+ "config": "resnet50|elm|patient|0",
+ "patients_with_corrected_masks": 52,
+ "voxel_dice_ai_vs_corrected": {
+  "median": 0.9997190919815873,
+  "min": 0.6729235763178322,
+  "mean": 0.9796782079421545
+ },
+ "patients_with_identical_masks": 29,
+ "slices_compared": 1770,
+ "slice_label_disagreements": 7,
+ "metrics_vs_ai_labels": {
+  "auc": 0.9459637936341888,
+  "accuracy": 0.868361581920904,
+  "balanced_accuracy": 0.8680656941299092,
+  "sensitivity": 0.8535178777393311,
+  "specificity": 0.8826135105204873
+ },
+ "metrics_vs_corrected_labels": {
+  "auc": 0.9462370259888853,
+  "accuracy": 0.8689265536723164,
+  "balanced_accuracy": 0.8687096477607061,
+  "sensitivity": 0.851258581235698,
+  "specificity": 0.8861607142857143
+ }
+}

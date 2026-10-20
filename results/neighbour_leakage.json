@@ -1,0 +1,17 @@
+{
+ "features": "resnet50",
+ "slice": {
+  "test_slices": 3430,
+  "nn_same_patient": 0.7128279883381924,
+  "nn_same_patient_within_6mm": 0.6979591836734694,
+  "median_dz_mm_if_same_patient": 2.9999999999999964,
+  "one_nn_accuracy": 0.9230320699708455
+ },
+ "patient": {
+  "test_slices": 3427,
+  "nn_same_patient": 0.0,
+  "nn_same_patient_within_6mm": 0.0,
+  "median_dz_mm_if_same_patient": null,
+  "one_nn_accuracy": 0.7846512985118179
+ }
+}
