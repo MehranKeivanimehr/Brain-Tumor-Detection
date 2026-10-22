@@ -4,11 +4,11 @@
 
 | | |
 |---|---|
-| Images | UPENN-GBM (Bakas et al., *Sci Data* 2022), TCIA DOI [10.7937/TCIA.709X-DN49](https://doi.org/10.7937/TCIA.709X-DN49), CC BY 4.0 |
-| Segmentations | AIMI annotations (Murugesan et al., *Sci Data* 2025), DOI [10.5281/zenodo.8345959](https://doi.org/10.5281/zenodo.8345959), CC BY 4.0 |
+| Images | UPENN-GBM (Bakas et al., TCIA 2021; described in *Sci Data* 2022), TCIA DOI [10.7937/TCIA.709X-DN49](https://doi.org/10.7937/TCIA.709X-DN49), CC BY 4.0 |
+| Segmentations | AIMI annotations: Van Oss, Murugesan, McCrumb & Soni, "Image segmentations produced by BAMF under the AIMI Annotations initiative", Zenodo, DOI [10.5281/zenodo.8345959](https://doi.org/10.5281/zenodo.8345959), CC BY 4.0; described in Murugesan et al., *Sci Data* 2025 |
 | Access | NCI Imaging Data Commons, index v25, via `idc-index`; files fetched over HTTPS from the public `idc-open-data` bucket |
 | Series used | the processed axial FLAIR (`… : Processed_CaPTk`) of the pre-operative study, one per patient |
-| Labels | AIMI automatic nnU-Net segmentation of that FLAIR study (necrosis, edema, enhancing lesion); for 52 patients also the radiologist-corrected version |
+| Labels | AIMI automatic nnU-Net segmentation of that FLAIR study (necrosis, edema, enhancing lesion); for 52 of the analysed patients IDC also holds a radiologist-corrected version (Murugesan et al. report radiologist review of 45 UPENN-GBM studies; the count here is of corrected segmentation objects found in IDC v25) |
 
 `results/cohort_manifest.csv` lists the exact Study/Series Instance UIDs of every
 series used, so the cohort can be re-downloaded bit for bit
@@ -22,7 +22,9 @@ store their frames with the column direction cosine reversed
 FLAIR) and with the frame origin at the opposite edge. Decoding frames by UID
 alone therefore returns masks that are upside down. **All 540 segmentations
 decoded in this cohort have this property** (`results/qc_patients.csv`,
-column `seg_flipped`).
+column `seg_flipped`). The AIMI release notes for a later Zenodo version (v2.0.2,
+2024) mention a fix to how the brain-MR segmentations are transformed, without
+details; decoding by geometry is correct whichever orientation a file uses.
 
 `btmri.data.dicom.load_seg_on_grid` maps every segmentation pixel through
 patient coordinates into the FLAIR grid and raises if the mapping is not an

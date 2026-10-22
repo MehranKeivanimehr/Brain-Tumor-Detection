@@ -68,12 +68,13 @@ LBP vectors identify identical images. Everything below is reproduced by
 
 An independent 2026 audit of the public Kaggle brain-tumor corpora (Vangala et
 al., arXiv:2610.00421, preprint) reaches the same conclusion for this dataset
-family: 66 of the 253 images here are byte-identical to, and 123 are
-near-duplicates of, images in the larger Nickparvar corpus, only 130 usable
-images remain after cleaning, and file headers alone separate tumor from
-no-tumor images at 0.959 balanced accuracy. Classifiers can also succeed on the
-Figshare brain-tumor dataset without looking at the tumor at all (Wallis & Buvat,
-*Medical Image Analysis* 2022). A tumor/no-tumor dataset whose
+family. 123 of the 253 images here (48.6%) have a near-duplicate in the larger
+Nickparvar corpus, 66 of them byte-identical, so only 130 usable images remain
+after cleaning. On the Nickparvar corpus, features of the file header alone
+separate tumor from no-tumor images at 0.959 balanced accuracy. Classifiers can
+also succeed on the Figshare brain-tumor dataset without looking at the tumor at
+all: with the tumor occluded, tumor-type accuracy stays at 0.87, against 0.86 on
+the full slice (Wallis & Buvat, *Medical Image Analysis* 2022). A tumor/no-tumor dataset whose
 two classes come from different sources cannot show whether a model recognises
 tumors. This is why the main study in this repository uses a cohort where tumor and
 tumor-free slices come from the same patients and scanners.

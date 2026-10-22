@@ -83,11 +83,11 @@ that separate the classes without any anatomy.
 A tumor / no-tumor dataset whose two classes come from different sources cannot
 show whether a model recognises tumors. The study therefore uses **UPENN-GBM**
 (Bakas et al. 2022): pre-operative FLAIR MRI of 519 glioblastoma patients with
-automatic nnU-Net tumor segmentations (AIMI, Murugesan et al. 2025; 52 of them
-reviewed and corrected by radiologists), downloaded from the NCI Imaging Data
-Commons. **Tumor and tumor-free slices come from the
-same patients, scanners and acquisitions**, so the only thing that separates
-the classes is the tumor.
+automatic nnU-Net tumor segmentations (AIMI, Murugesan et al. 2025), downloaded
+from the NCI Imaging Data Commons (Fedorov et al. 2023). For 52 of these
+patients a radiologist-corrected segmentation is also available. **Tumor and
+tumor-free slices come from the same patients, scanners and acquisitions**, so
+the only thing that separates the classes is the tumor.
 
 ![dataset](figures/fig2_dataset.png)
 
@@ -102,7 +102,13 @@ the classes is the tumor.
 
 ## 3. How much do slice-level splits inflate results?
 
-Each feature family × classifier is evaluated twice with 5-fold cross-validation:
+Four feature families are compared: the handcrafted DWT/GLCM/LBP texture
+features of the original repo, wavelet scattering (Bruna & Mallat 2013, via
+Kymatio, Andreux et al. 2020), and frozen ImageNet ResNet-50 (He et al. 2016) and
+DenseNet-121 (Huang et al. 2017) features. The last two follow the deep-feature
+design of Kang et al. (2021). Each is paired with four heads: ridge, ELM,
+logistic regression and 15-nearest neighbours. Every combination is evaluated
+twice with 5-fold cross-validation:
 splitting **slices** at random (what most published pipelines do) and splitting
 **patients**. Hyper-parameters are tuned inside the training folds with the same
 unit. Confidence intervals come from a patient-level bootstrap.
@@ -144,13 +150,17 @@ unit. Confidence intervals come from a patient-level bootstrap.
   the *same patient*, a median of 3 mm away: the adjacent slice. Copying its
   label scores 92.3%; with patients kept apart the same rule scores 78.5%. The
   same effect inflated Alzheimer's and Parkinson's classifiers by 29–55 points in
-  Yagis et al. (2021) and is reported in 16 of 32 surveyed studies by Wen et al.
-  (2020). It is smaller here because the tumor signal itself is strong.
+  Yagis et al. (2021). Wen et al. (2020) judged data leakage to be potentially
+  present in 16 of the 32 CNN studies they surveyed (clearly in 6, possibly in
+  10). The inflation is smaller here because the tumor signal itself is strong.
+  Leakage of this kind is a recognised cause of irreproducible results in
+  medical imaging and beyond (Tampu et al. 2022; Varoquaux & Cheplygina 2022;
+  Kapoor & Narayanan 2023).
 * **The honest numbers are still good.** The best patient-level result is
   DenseNet-121 features with logistic regression: AUC 0.965 [0.960, 0.969],
   balanced accuracy 90.3% (sensitivity 88.8%, specificity 91.7%). With
-  out-of-patient Platt calibration the linear and ELM heads reach an expected
-  calibration error of 0.010–0.023.
+  out-of-patient Platt calibration (Platt 2000) the linear and ELM heads reach an
+  expected calibration error (Guo et al. 2017) of 0.010–0.023.
 * **The ELM helps only where features are weak.** On the handcrafted features
   its random hidden layer adds about one AUC point over ridge (0.913 vs 0.903);
   on pretrained CNN features it matches, but does not beat, the linear heads.
@@ -172,7 +182,7 @@ The original ELM is a random hidden layer plus a least-squares readout. In
 modern terms it is a closed-form, random-feature head (Huang et al. 2006; Rahimi
 & Recht 2007), and that algebra has a useful property. For ridge regression on
 any fixed feature map, deleting a whole patient `G` has an exact closed form
-(Woodbury; Cook & Weisberg 1982):
+(Woodbury identity, Hager 1989; Cook & Weisberg 1982):
 
 ```
 B₋G = B − A⁻¹ Φ_Gᵀ (I − H_GG)⁻¹ E_G          H_GG = Φ_G A⁻¹ Φ_Gᵀ,  E_G = T_G − Φ_G B
@@ -206,10 +216,15 @@ brute-force refits for ridge, ELM, binary and multi-class heads.
 
 ## 5. Patient-level conformal prediction
 
-A prediction set (`{tumor}`, `{no tumor}` or both) should contain the true label
+Conformal prediction (Vovk et al. 2005; Lei et al. 2018; Angelopoulos & Bates
+2023) turns any classifier into prediction sets with a coverage guarantee. A
+prediction set (`{tumor}`, `{no tumor}` or both) should contain the true label
 for at least 90% of slices **of a new patient**. Slices of one patient are not
 exchangeable with slices of another, so calibrating on slices of patients the
-model has already seen is invalid. Seven calibration strategies, three of them
+model has already seen is invalid (Dunn et al. 2023). Nguyen et al. (2026) report
+the same problem for tumor-type classification: slice-level calibration met the
+per-patient coverage target in far fewer splits than patient-level calibration
+(27% vs 84%). Seven calibration strategies, three of them
 also in class-conditional form, are compared on held-out patients
 ([`docs/methods.md`](docs/methods.md)). ResNet-50 features, ELM head, 5 patient
 folds × 3 repeats:
@@ -278,7 +293,9 @@ slices and the naive sets 27, so on this patient both fall short of 90%:
 </p>
 
 **Class-conditional sets guarantee sensitivity, but not for every tumor size.**
-Calibrating each class separately (Mondrian) targets 90% coverage of the
+Calibrating each class separately (Mondrian; Vovk et al. 2005; Sadinle et al.
+2019), as also used for fair conformal prediction in medical imaging (Lu et al.
+2022), targets 90% coverage of the
 *tumor* slices themselves, which is a guarantee on the sensitivity of the set.
 It raises tumor-class coverage from 87.9% to 92.0%. Small cross-sections
 remain the weak point. In one held-out fold (189 slices with 1–3 cm² of tumor),
@@ -320,9 +337,13 @@ other 3 T or 1.5 T systems (5 random splits):
 * A conformal guarantee is a property of the calibration population. Patients
   from a new site, scanner or field strength are outside it.
 
-**A controlled "Frankenstein" dataset.** Re-encoding a fraction of the
-tumor-free slices as JPEG mimics a dataset whose classes come from different
-sources:
+**A controlled "Frankenstein" dataset.** Roberts et al. (2021) use this name for
+public datasets assembled from other datasets. They warn that when images of
+different classes come from different sources, or are compressed differently,
+a model can learn the source instead of the disease. This has been documented
+for COVID-19 radiographs (DeGrave et al. 2021) and for a public brain-tumor
+dataset (Wallis & Buvat 2022). Re-encoding a fraction of the tumor-free slices
+as JPEG mimics such a dataset under controlled conditions:
 
 ![shortcut](figures/fig8_shortcut.png)
 
@@ -386,8 +407,8 @@ legacy/                the original 2023 MATLAB code, notebook and features
 ## 9. Limitations
 
 * **Automatic reference labels.** Tumor presence is defined by the AIMI nnU-Net
-  segmentations. Radiologists corrected only 52 of them; there the corrections
-  were minimal (median Dice 0.9997; 7 of 1,770 slice labels changed; AUC
+  segmentations. A radiologist-corrected version exists for only 52 of them;
+  there the corrections were minimal (median Dice 0.9997; 7 of 1,770 slice labels changed; AUC
   0.9460 vs 0.9462). Elsewhere the label error rate is unknown, and 21
   patients were excluded because their automatic segmentation was empty.
 * **One institution, one tumor type, one sequence.** All patients are
@@ -450,27 +471,30 @@ legacy/                the original 2023 MATLAB code, notebook and features
 - He K, Zhang X, Ren S, Sun J. Deep residual learning for image recognition. *CVPR* 770–778 (2016). [doi:10.1109/CVPR.2016.90](https://doi.org/10.1109/CVPR.2016.90)
 - Huang G, Liu Z, van der Maaten L, Weinberger KQ. Densely connected convolutional networks. *CVPR* 2261–2269 (2017). [doi:10.1109/CVPR.2017.243](https://doi.org/10.1109/CVPR.2017.243)
 - Kang J, Ullah Z, Gwak J. MRI-based brain tumor classification using ensemble of deep features and machine learning classifiers. *Sensors* 21(6):2222 (2021). [doi:10.3390/s21062222](https://doi.org/10.3390/s21062222)
-- Platt JC. Probabilistic outputs for support vector machines and comparisons to regularized likelihood methods. In *Advances in Large Margin Classifiers*, MIT Press, 61–74 (1999).
+- Platt JC. Probabilistic outputs for support vector machines and comparisons to regularized likelihood methods. In *Advances in Large-Margin Classifiers*, MIT Press, 61–74 (2000).
 - Guo C, Pleiss G, Sun Y, Weinberger KQ. On calibration of modern neural networks. *ICML*, PMLR 70:1321–1330 (2017). [link](https://proceedings.mlr.press/v70/guo17a.html)
 
 **Conformal prediction**
 - Vovk V, Gammerman A, Shafer G. *Algorithmic Learning in a Random World*. Springer (2005). [doi:10.1007/b106715](https://doi.org/10.1007/b106715)
 - Lei J, G'Sell M, Rinaldo A, Tibshirani RJ, Wasserman L. Distribution-free predictive inference for regression. *JASA* 113(523):1094–1111 (2018). [doi:10.1080/01621459.2017.1307116](https://doi.org/10.1080/01621459.2017.1307116)
 - Barber RF, Candès EJ, Ramdas A, Tibshirani RJ. Predictive inference with the jackknife+. *Annals of Statistics* 49(1):486–507 (2021). [doi:10.1214/20-AOS1965](https://doi.org/10.1214/20-AOS1965)
-- Romano Y, Sesia M, Candès EJ. Classification with valid and adaptive coverage. *NeurIPS* 33 (2020). [link](https://proceedings.neurips.cc/paper/2020/hash/244edd7e85dc81602b7615cd705545f5-Abstract.html)
+- Romano Y, Sesia M, Candès EJ. Classification with valid and adaptive coverage. *NeurIPS* 33:3581–3591 (2020). [link](https://proceedings.neurips.cc/paper/2020/hash/244edd7e85dc81602b7615cd705545f5-Abstract.html)
 - Sadinle M, Lei J, Wasserman L. Least ambiguous set-valued classifiers with bounded error levels. *JASA* 114(525):223–234 (2019). [doi:10.1080/01621459.2017.1395341](https://doi.org/10.1080/01621459.2017.1395341)
 - Dunn R, Wasserman L, Ramdas A. Distribution-free prediction sets for two-layer hierarchical models. *JASA* 118(544):2491–2502 (2023). [doi:10.1080/01621459.2022.2060112](https://doi.org/10.1080/01621459.2022.2060112)
-- Lee Y, Barber RF, Willett R. Distribution-free inference with hierarchical data. *ACM/IMS Journal of Data Science* (2026). [doi:10.1145/3786352](https://doi.org/10.1145/3786352)
+- Lee Y, Barber RF, Willett R. Distribution-free inference with hierarchical data. *ACM Journal of Data Science* (2026). [doi:10.1145/3786352](https://doi.org/10.1145/3786352); [arXiv:2306.06342](https://arxiv.org/abs/2306.06342)
 - Angelopoulos AN, Bates S. Conformal prediction: a gentle introduction. *Foundations and Trends in Machine Learning* 16(4):494–591 (2023). [doi:10.1561/2200000101](https://doi.org/10.1561/2200000101)
 - Lu C, Lemay A, Chang K, Höbel K, Kalpathy-Cramer J. Fair conformal predictors for applications in medical imaging. *AAAI* 36(11):12008–12016 (2022). [doi:10.1609/aaai.v36i11.21459](https://doi.org/10.1609/aaai.v36i11.21459)
 - Nguyen NVT, Huynh TV, Dang LV. Uncertainty-aware brain-tumor type classification from MRI: segmentation-guided ROI, conformal prediction, and selective abstention under distribution shift. *IEEE Access* 14:145170–145178 (2026). [doi:10.1109/ACCESS.2026.3729887](https://doi.org/10.1109/ACCESS.2026.3729887)
 
 **Reporting**
 - Tejani AS, Klontzas ME, Gatti AA, et al. Checklist for Artificial Intelligence in Medical Imaging (CLAIM): 2024 update. *Radiology: Artificial Intelligence* 6(4):e240300 (2024). [doi:10.1148/ryai.240300](https://doi.org/10.1148/ryai.240300)
-- Collins GS, Moons KGM, Dhiman P, et al. TRIPOD+AI statement. *BMJ* 385:e078378 (2024). [doi:10.1136/bmj-2023-078378](https://doi.org/10.1136/bmj-2023-078378)
+- Collins GS, Moons KGM, Dhiman P, et al. TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods. *BMJ* 385:e078378 (2024). [doi:10.1136/bmj-2023-078378](https://doi.org/10.1136/bmj-2023-078378)
 
 ## Data and citation
 
-UPENN-GBM images: Bakas et al. 2022, TCIA DOI 10.7937/TCIA.709X-DN49 (CC BY 4.0).
-AIMI segmentations: Murugesan et al. 2025, Zenodo DOI 10.5281/zenodo.8345959 (CC BY 4.0).
+UPENN-GBM images: Bakas S et al., The Cancer Imaging Archive (2021), DOI
+10.7937/TCIA.709X-DN49 (CC BY 4.0); described in Bakas et al. 2022.
+AIMI segmentations: Van Oss J, Murugesan GK, McCrumb D, Soni R. Image segmentations
+produced by BAMF under the AIMI Annotations initiative, Zenodo, DOI
+10.5281/zenodo.8345959 (CC BY 4.0); described in Murugesan et al. 2025.
 Code: MIT License. To cite this repository, see [`CITATION.cff`](CITATION.cff).
