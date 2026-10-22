@@ -13,6 +13,7 @@ column-flipped copy (alignment margin <= 0, the signature of a misregistered
 mask).
 """
 
+import argparse
 import multiprocessing as mp
 from pathlib import Path
 
@@ -100,9 +101,14 @@ def assemble(qc: pd.DataFrame, cohort: pd.DataFrame):
 
 
 def main():
-    OUT.mkdir(parents=True, exist_ok=True)
+    argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter).parse_args()
     cohort = pd.read_csv(ROOT / "results" / "cohort_manifest.csv")
     todo = [r for r in cohort.to_dict("records") if (RAW / r["PatientID"] / ".complete").exists()]
+    if not todo:
+        raise SystemExit(f"no downloaded patients in {RAW}; run scripts/01_download_upenn_gbm.py first")
+    if len(todo) < len(cohort):
+        print(f"warning: only {len(todo)} of {len(cohort)} cohort patients are downloaded")
+    OUT.mkdir(parents=True, exist_ok=True)
     print(f"processing {len(todo)} downloaded patients")
     with mp.Pool(4) as pool:
         qc = pd.DataFrame(pool.map(process, todo, chunksize=4))
